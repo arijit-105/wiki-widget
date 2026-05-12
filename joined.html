@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body{
+    margin:0;
+    background:transparent;
+    font-family:sans-serif;
+    color:white;
+    font-size:12px;
+    font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<span id="joined">Loading...</span>
+
+<script>
+function timeAgo(dateString) {
+    const now = new Date();
+    const then = new Date(dateString);
+
+    let years = now.getFullYear() - then.getFullYear();
+    let months = now.getMonth() - then.getMonth();
+
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    if (years > 0) {
+        return years + "y " + months + "m";
+    }
+
+    return months + "m";
+}
+
+const params = new URLSearchParams(window.location.search);
+
+const wiki = params.get('wiki');
+const user = params.get('user') || 'ARI';
+
+if (!wiki) {
+    document.getElementById('joined').innerText = 'Unknown wiki';
+} else {
+
+fetch(`https://${wiki}/w/api.php?action=query&list=usercontribs&ucuser=${encodeURIComponent(user)}&uclimit=1&ucdir=newer&format=json&origin=*`)
+.then(r => r.json())
+.then(data => {
+
+    const contribs = data.query.usercontribs;
+
+    if (!contribs.length) {
+        document.getElementById('joined').innerText = 'Not active';
+        return;
+    }
+
+    const firstEdit = contribs[0].timestamp;
+
+    document.getElementById('joined').innerText =
+        'Joined: ' + timeAgo(firstEdit);
+
+})
+.catch(() => {
+    document.getElementById('joined').innerText = 'Error';
+});
+
+}
+</script>
+
+</body>
+</html>
