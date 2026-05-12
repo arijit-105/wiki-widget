@@ -18,7 +18,9 @@ body{
 <span id="joined">Loading...</span>
 
 <script>
+
 function timeAgo(dateString) {
+
     const now = new Date();
     const then = new Date(dateString);
 
@@ -40,34 +42,56 @@ function timeAgo(dateString) {
 const params = new URLSearchParams(window.location.search);
 
 const wiki = params.get('wiki');
-const user = params.get('user') || 'ARI';
+const user = params.get('user');
 
-if (!wiki) {
-    document.getElementById('joined').innerText = 'Unknown wiki';
+const output = document.getElementById('joined');
+
+if (!wiki || !user) {
+    output.innerText = 'Missing params';
 } else {
 
-fetch(`https://${wiki}/w/api.php?action=query&list=usercontribs&ucuser=${encodeURIComponent(user)}&uclimit=1&ucdir=newer&format=json&origin=*`)
-.then(r => r.json())
-.then(data => {
+    const api =
+        `https://${wiki}/w/api.php?action=query&list=usercontribs&ucuser=${encodeURIComponent(user)}&uclimit=1&ucdir=newer&format=json&origin=*`;
 
-    const contribs = data.query.usercontribs;
+    fetch(api)
+    .then(response => response.json())
+    .then(data => {
 
-    if (!contribs.length) {
-        document.getElementById('joined').innerText = 'Not active';
-        return;
-    }
+        console.log(data);
 
-    const firstEdit = contribs[0].timestamp;
+        if (!data.query) {
+            output.innerText = 'No query';
+            return;
+        }
 
-    document.getElementById('joined').innerText =
-        'Joined: ' + timeAgo(firstEdit);
+        if (!data.query.usercontribs) {
+            output.innerText = 'No contribs';
+            return;
+        }
 
-})
-.catch(() => {
-    document.getElementById('joined').innerText = 'Error';
-});
+        const contribs = data.query.usercontribs;
+
+        if (contribs.length === 0) {
+            output.innerText = 'Not active';
+            return;
+        }
+
+        const firstEdit = contribs[0].timestamp;
+
+        output.innerText =
+            'Joined: ' + timeAgo(firstEdit);
+
+    })
+    .catch(error => {
+
+        console.error(error);
+
+        output.innerText = 'Fetch error';
+
+    });
 
 }
+
 </script>
 
 </body>
